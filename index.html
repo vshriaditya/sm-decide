@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sm/decide - SageMaker Customization Advisor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #f7f6f2;
+      --color-surface: #f9f8f5;
+      --color-surface-2: #fbfbf9;
+      --color-surface-offset: #f3f0ec;
+      --color-border: #d4d1ca;
+      --color-divider: #dcd9d5;
+      --color-text: #28251d;
+      --color-text-muted: #7a7974;
+      --color-text-faint: #bab9b4;
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-primary-highlight: #cedcd8;
+      --color-warning: #964219;
+      --color-warning-highlight: #ddcfc6;
+      --color-error: #a12c7b;
+      --color-success: #437a22;
+      --color-success-highlight: #d4dfcc;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body: 'Manrope', 'Helvetica Neue', sans-serif;
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+      --space-4: 1rem; --space-6: 1.5rem; --space-8: 2rem;
+      --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
+      --radius-sm: 0.375rem; --radius-md: 0.5rem;
+      --radius-lg: 0.75rem; --radius-xl: 1rem;
+      --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+      --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+      --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+      --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #141513;
+      --color-surface: #1b1d1a;
+      --color-surface-2: #20231f;
+      --color-surface-offset: #171916;
+      --color-border: #343832;
+      --color-divider: #2e322d;
+      --color-text: #f2f0ea;
+      --color-text-muted: #c2c1ba;
+      --color-text-faint: #868780;
+      --color-primary: #4ab8bc;
+      --color-primary-hover: #7ccfd2;
+      --color-primary-highlight: #223839;
+      --color-warning: #ffb084;
+      --color-warning-highlight: #473329;
+      --color-error: #f58cc7;
+      --color-success: #9fcb7f;
+      --color-success-highlight: #293726;
+      --shadow-sm: 0 1px 2px oklch(0.1 0.01 80 / 0.45);
+      --shadow-md: 0 4px 12px oklch(0.1 0.01 80 / 0.5);
+      --shadow-lg: 0 12px 32px oklch(0.1 0.01 80 / 0.6);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: radial-gradient(circle at 20% 0%, var(--color-surface-2) 0%, var(--color-bg) 45%, var(--color-surface-offset) 100%);
+      line-height: 1.62;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      color: var(--color-text);
+      line-height: 1.2;
+    }
+
+    h1, h2 {
+      font-family: var(--font-display);
+    }
+
+    h3, h4, p, li, button, a, span, label {
+      font-family: var(--font-body);
+    }
+
+    p { margin: 0; }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-divider);
+      padding: var(--space-3) var(--space-6);
+      backdrop-filter: blur(4px);
+    }
+
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .nav-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav-badge {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+      padding: var(--space-2) var(--space-3);
+      white-space: nowrap;
+      background: var(--color-surface-2);
+      font-weight: 600;
+    }
+
+    .nav-link {
+      min-height: 44px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-text);
+      padding: 0 var(--space-5);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible {
+      border-color: var(--color-primary);
+      background: var(--color-primary-highlight);
+      color: var(--color-primary);
+      outline: none;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      color: var(--color-primary);
+      font-size: var(--text-sm);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .brand svg { width: 22px; height: 22px; }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), transform var(--transition);
+      touch-action: manipulation;
+    }
+
+    .icon-btn:hover,
+    .icon-btn:focus-visible {
+      border-color: var(--color-primary);
+      background: var(--color-primary-highlight);
+      outline: none;
+    }
+
+    .icon-btn:active { transform: translateY(1px); }
+
+    .sun-icon { display: none; }
+    [data-theme="dark"] .sun-icon { display: block; }
+    [data-theme="dark"] .moon-icon { display: none; }
+
+    .section-wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
+
+    .hero {
+      padding-block: clamp(var(--space-12), 8vw, var(--space-16));
+    }
+
+    .hero-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: grid;
+      gap: var(--space-6);
+    }
+
+    .eyebrow {
+      width: fit-content;
+      background: var(--color-primary-highlight);
+      color: var(--color-primary);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .hero h1 {
+      font-size: var(--text-2xl);
+      max-width: 24ch;
+      text-wrap: balance;
+    }
+
+    .hero p {
+      color: var(--color-text-muted);
+      max-width: 60ch;
+      font-size: var(--text-base);
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+      align-items: center;
+    }
+
+    .btn {
+      min-height: 44px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      padding: var(--space-3) var(--space-6);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      line-height: 1.25;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+      touch-action: manipulation;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover { background: var(--color-primary-hover); }
+
+    .btn-ghost {
+      background: var(--color-surface);
+      border-color: var(--color-border);
+      color: var(--color-text);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-highlight);
+    }
+
+    .gap-block {
+      padding-bottom: var(--space-12);
+    }
+
+    .gap-block h2 {
+      font-size: var(--text-lg);
+      margin-bottom: var(--space-4);
+    }
+
+    .gap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .gap-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      gap: var(--space-3);
+      align-content: start;
+    }
+
+    .gap-card svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-primary);
+    }
+
+    .gap-card h3 {
+      font-size: var(--text-base);
+      font-weight: 650;
+    }
+
+    .gap-card p {
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .advisor-section {
+      padding: var(--space-8) 0 var(--space-12);
+    }
+
+    .advisor-title {
+      max-width: 680px;
+      margin: 0 auto;
+      font-size: var(--text-xl);
+      border-bottom: 1px solid var(--color-divider);
+      padding-bottom: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .wizard {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: var(--space-10) var(--space-8);
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-md);
+      display: grid;
+      gap: var(--space-6);
+    }
+
+    .stage-progress {
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .stage-row {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .stage-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+
+    .stage-bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--color-surface-offset);
+      overflow: hidden;
+      border: 1px solid var(--color-divider);
+    }
+
+    .stage-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #ffffff));
+      transition: width 220ms ease-out;
+    }
+
+    .question-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-2);
+      padding: var(--space-8);
+      display: grid;
+      gap: var(--space-4);
+      transition: opacity 220ms ease-out, transform 220ms ease-out;
+    }
+
+    .question-card.is-exiting {
+      opacity: 0;
+      transform: translateX(-16px);
+      pointer-events: none;
+    }
+
+    .question-card.is-entering {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+
+    .q-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .dot-row {
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--color-divider);
+    }
+
+    .dot.active { background: var(--color-primary); }
+
+    .q-title {
+      font-size: var(--text-lg);
+      font-family: var(--font-body);
+      font-weight: 650;
+      text-wrap: balance;
+    }
+
+    .answers {
+      display: grid;
+      gap: var(--space-3);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .answer-btn {
+      min-height: 64px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-text);
+      text-align: left;
+      padding: var(--space-4) var(--space-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), transform var(--transition);
+      touch-action: manipulation;
+    }
+
+    .answer-btn:hover,
+    .answer-btn:focus-visible {
+      border-color: var(--color-primary);
+      background: var(--color-primary-highlight);
+      outline: none;
+    }
+
+    .answer-btn.selected {
+      border-color: var(--color-primary);
+      background: var(--color-primary-highlight);
+    }
+
+    .checkmark {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 1px solid var(--color-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      color: var(--color-primary);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .answer-btn.selected .checkmark { opacity: 1; }
+
+    .q-actions {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .back-btn {
+      min-height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      padding: var(--space-2) var(--space-1);
+      cursor: pointer;
+    }
+
+    .back-btn:hover,
+    .back-btn:focus-visible {
+      color: var(--color-primary);
+      outline: none;
+    }
+
+    .recommendation-section {
+      display: none;
+      padding-bottom: var(--space-16);
+    }
+
+    .recommendation-section.revealed {
+      display: block;
+      animation: fadeUp 400ms ease-out forwards;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .recommendation-inner {
+      max-width: 820px;
+      margin: 0 auto;
+      display: grid;
+      gap: var(--space-6);
+    }
+
+    .recommendation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+      padding-right: var(--space-1);
+    }
+
+    .recommendation-header h2 {
+      font-size: var(--text-lg);
+      letter-spacing: 0.02em;
+    }
+
+    .verdict-card {
+      background: var(--color-primary);
+      color: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: var(--space-10);
+      display: grid;
+      gap: var(--space-3);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .verdict-card.nova {
+      background: #151816;
+      color: #ffffff;
+    }
+
+    .verdict-name {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      color: #ffffff;
+    }
+
+    .verdict-sub {
+      font-size: var(--text-base);
+      color: color-mix(in srgb, #ffffff 70%, transparent);
+    }
+
+    .confidence-wrap {
+      display: grid;
+      gap: var(--space-2);
+      margin-top: var(--space-2);
+      max-width: 380px;
+    }
+
+    .confidence-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, #ffffff 25%, transparent);
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      width: 0;
+      background: #4ad4c8;
+      transition: width 260ms ease-out;
+    }
+
+    .confidence-label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .warning-banner {
+      display: none;
+      border-radius: var(--radius-md);
+      padding: var(--space-4) var(--space-6);
+      font-size: var(--text-sm);
+      line-height: 1.45;
+      border: 1px solid transparent;
+    }
+
+    .warning-banner.warn {
+      display: block;
+      background: var(--color-warning-highlight);
+      color: var(--color-warning);
+      border-color: color-mix(in srgb, var(--color-warning) 20%, transparent);
+    }
+
+    .warning-banner.fail {
+      display: block;
+      background: #fce8f3;
+      color: var(--color-error);
+      border-color: color-mix(in srgb, var(--color-error) 25%, transparent);
+    }
+
+    [data-theme="dark"] .warning-banner.fail {
+      background: #3a2032;
+    }
+
+    .content-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .content-card h3 {
+      font-size: var(--text-lg);
+      font-family: var(--font-display);
+    }
+
+    .reason-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: var(--space-3);
+      font-size: var(--text-sm);
+    }
+
+    .reason-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+    }
+
+    .reason-icon {
+      font-size: 1rem;
+      line-height: 1.4;
+      flex: 0 0 auto;
+    }
+
+    .alternatives-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-3);
+    }
+
+    .alt-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      background: var(--color-surface-2);
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .alt-card h4 {
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+
+    .alt-card p {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    .steps {
+      position: relative;
+      margin: 0;
+      padding-left: var(--space-8);
+      list-style: none;
+      display: grid;
+      gap: var(--space-5);
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 10px;
+      bottom: 12px;
+      width: 2px;
+      background: var(--color-divider);
+    }
+
+    .step-item {
+      position: relative;
+      display: grid;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+    }
+
+    .step-item::before {
+      content: attr(data-step);
+      position: absolute;
+      left: calc(-1 * var(--space-8));
+      top: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: var(--color-primary-highlight);
+      color: var(--color-primary);
+      border: 1px solid var(--color-border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      font-weight: 700;
+    }
+
+    .pill-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      width: fit-content;
+      padding: var(--space-2) var(--space-4);
+      border-radius: 999px;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: var(--color-primary);
+      color: #ffffff;
+    }
+
+    .text-link {
+      color: var(--color-primary);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+
+    .bottom-reset {
+      justify-self: start;
+      margin-top: var(--space-2);
+    }
+
+    @media (max-width: 767px) {
+      .section-wrap,
+      .site-nav {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+      }
+
+      .answers {
+        grid-template-columns: 1fr;
+      }
+
+      .alternatives-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .verdict-name {
+        font-size: var(--text-lg);
+      }
+
+      .cta-row .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .recommendation-header {
+        align-items: flex-start;
+      }
+
+      .recommendation-header .btn {
+        margin-top: var(--space-2);
+      }
+
+      .nav-badge {
+        display: none;
+      }
+
+      .wizard {
+        padding: var(--space-6) var(--space-4);
+      }
+
+      .question-card {
+        padding: var(--space-6) var(--space-4);
+      }
+
+      .verdict-card,
+      .content-card {
+        padding: var(--space-6);
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .gap-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .gap-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2L22 12L12 22L2 12L12 2Z" stroke="currentColor" stroke-width="1.8" />
+          <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+          <path d="M12 4.8V9.1M19.2 12H14.9M12 19.2V14.9M4.8 12H9.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span>sm/decide</span>
+      </div>
+      <div class="nav-actions">
+        <span class="nav-badge">SageMaker · Customization Advisor</span>
+        <a class="nav-link" href="http://127.0.0.1:8001/index.html">Open sm/dataquality</a>
+        <button class="icon-btn" id="themeToggle" aria-label="Switch to dark mode" title="Toggle color theme">
+          <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M20.5 14.1A8.5 8.5 0 1 1 9.9 3.5a7 7 0 1 0 10.6 10.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 2.5V5M12 19V21.5M2.5 12H5M19 12h2.5M4.8 4.8l1.8 1.8M17.4 17.4l1.8 1.8M19.2 4.8l-1.8 1.8M6.6 17.4l-1.8 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero section-wrap" id="landing">
+      <div class="hero-inner">
+        <span class="eyebrow">SAGEMAKER CUSTOMIZATION ADVISOR</span>
+        <h1>Pick the right SageMaker customization technique before you train.</h1>
+        <p>SageMaker offers four fine-tuning techniques and Nova Forge for deeper customization. Most engineers pick one without knowing what the others would have done. sm/decide walks you through the decision in under two minutes - showing its reasoning at every step.</p>
+        <div class="cta-row">
+          <button id="startFullFlow" class="btn btn-primary">Start the Advisor →</button>
+          <button id="startStage2Only" class="btn btn-ghost">I already know I'm fine-tuning - pick my technique</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="gap-block section-wrap" aria-labelledby="gapTitle">
+      <h2 id="gapTitle">What SageMaker doesn't tell you</h2>
+      <div class="gap-grid">
+        <article class="gap-card">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 5v14m0-7h6m0 0V5m0 7l10-7m-10 7 10 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3>No path guidance</h3>
+          <p>SageMaker's Model Customization console assumes you've already decided between SFT, DPO, and RFT. There is no wizard, no recommendation, and no explanation of when each technique applies.</p>
+        </article>
+        <article class="gap-card">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3.2 2.9 19h18.2L12 3.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M12 9.2v4.7m0 3.2h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <h3>SFT won't teach new facts</h3>
+          <p>A common mistake: using SFT to inject new domain knowledge into a model. AWS documentation explicitly states SFT changes behavior, not knowledge. For new facts, you need Nova Forge continued pre-training or RAG. sm/decide catches this before you waste a training run.</p>
+        </article>
+        <article class="gap-card">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="4" y="10" width="16" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="4" y="15" width="16" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <h3>Nova Forge is deeper, not just different</h3>
+          <p>Nova Forge isn't an alternative to fine-tuning - it's a deeper tier of it, starting from earlier model checkpoints. It requires HyperPod infrastructure and program approval. Most engineers don't know this distinction exists until they're already mid-project.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="advisor-section section-wrap" id="advisor" aria-labelledby="advisorTitle">
+      <h2 class="advisor-title" id="advisorTitle">The Advisor</h2>
+      <div class="wizard">
+        <div class="stage-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="wizardProgressbar">
+          <div class="stage-row">
+            <div class="stage-label-row">
+              <span id="stage1Label">Stage 1: Customization Approach</span>
+              <span id="stage1Percent">0%</span>
+            </div>
+            <div class="stage-bar"><div class="stage-fill" id="stage1Fill"></div></div>
+          </div>
+          <div class="stage-row">
+            <div class="stage-label-row">
+              <span id="stage2Label">Stage 2: Fine-Tuning Technique</span>
+              <span id="stage2Percent">0%</span>
+            </div>
+            <div class="stage-bar"><div class="stage-fill" id="stage2Fill"></div></div>
+          </div>
+        </div>
+
+        <article class="question-card" id="questionCard" aria-live="polite">
+          <div class="q-meta">
+            <span id="questionMeta">STAGE 1 · QUESTION 1 OF 5</span>
+            <span class="dot-row" id="questionDots"></span>
+          </div>
+          <h3 class="q-title" id="questionTitle"></h3>
+          <div class="answers" id="answersContainer"></div>
+          <div class="q-actions">
+            <button class="back-btn" id="backButton" type="button">← Back</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="recommendation-section section-wrap" id="recommendation" aria-labelledby="recommendationTitle">
+      <div class="recommendation-inner">
+        <div class="recommendation-header">
+          <h2 id="recommendationTitle">YOUR RECOMMENDATION</h2>
+          <button class="btn btn-ghost" type="button" id="startOverTop">Start Over ↺</button>
+        </div>
+
+        <div class="verdict-card" id="verdictCard">
+          <h3 class="verdict-name" id="verdictHeading" tabindex="-1"></h3>
+          <p class="verdict-sub" id="verdictSubheading"></p>
+          <div class="confidence-wrap">
+            <div class="confidence-track"><div class="confidence-fill" id="confidenceFill"></div></div>
+            <p class="confidence-label" id="confidenceLabel"></p>
+          </div>
+        </div>
+
+        <div class="warning-banner" id="datasetWarning"></div>
+
+        <article class="content-card" id="whyCard">
+          <h3>Why this recommendation</h3>
+          <ul class="reason-list" id="whyList"></ul>
+        </article>
+
+        <article class="content-card">
+          <h3>Why not the alternatives</h3>
+          <div class="alternatives-grid" id="alternativesGrid"></div>
+        </article>
+
+        <article class="content-card">
+          <h3>Your next steps</h3>
+          <ol class="steps" id="nextSteps"></ol>
+        </article>
+
+        <button class="btn btn-ghost bottom-reset" type="button" id="startOverBottom">Start Over ↺</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const questions = {
+      q1: {
+        id: 'q1',
+        stage: 1,
+        prompt: 'What is your primary goal?',
+        options: [
+          { id: 'A', text: 'Change how the model speaks - tone, style, persona, output format, safety guardrails', signal: 'sagemaker' },
+          { id: 'B', text: 'Improve accuracy on a specific narrow task using labeled examples', signal: 'sagemaker' },
+          { id: 'C', text: "Embed deep domain expertise - the model needs to think natively in my industry's language and concepts", signal: 'nova' },
+          { id: 'D', text: "I need the model to learn new factual knowledge or recent events it doesn't know", signal: 'nova_cpt' }
+        ]
+      },
+      q2: {
+        id: 'q2',
+        stage: 1,
+        prompt: 'How much training data do you have?',
+        options: [
+          { id: 'A', text: 'Fewer than 50 labeled examples', signal: 'sagemaker' },
+          { id: 'B', text: '50 to 1,000 labeled pairs', signal: 'sagemaker' },
+          { id: 'C', text: '1,000 to 100,000+ labeled pairs', signal: 'nova' },
+          { id: 'D', text: 'Millions of tokens of unlabeled domain text (for continued pre-training)', signal: 'nova' }
+        ]
+      },
+      q3: {
+        id: 'q3',
+        stage: 1,
+        prompt: 'What infrastructure are you working with?',
+        options: [
+          { id: 'A', text: 'Standard SageMaker Training Jobs', signal: 'sagemaker' },
+          { id: 'B', text: 'SageMaker HyperPod with p5 instances is available', signal: 'nova' },
+          { id: 'C', text: "I'm not sure", signal: 'sagemaker' }
+        ]
+      },
+      q4: {
+        id: 'q4',
+        stage: 1,
+        prompt: 'How deep does the customization need to be?',
+        options: [
+          { id: 'A', text: 'Task-level: improve performance on a defined task', signal: 'sagemaker' },
+          { id: 'B', text: 'Behavior-level: improve style, format, or policy adherence', signal: 'sagemaker' },
+          { id: 'C', text: 'Capability-level: develop broader domain-native reasoning capability', signal: 'nova' },
+          { id: 'D', text: 'Base-model rebuild: start from an earlier model snapshot and continue training from that point', signal: 'nova' }
+        ]
+      },
+      q5: {
+        id: 'q5',
+        stage: 1,
+        prompt: 'Which model outcome best matches your plan?',
+        options: [
+          { id: 'A', text: 'Task adaptation: improve an existing base model for your specific use case', signal: 'sagemaker' },
+          { id: 'B', text: 'Dedicated model: produce a separate model artifact', signal: 'nova' },
+          { id: 'C', text: 'Not sure yet', signal: 'sagemaker' }
+        ]
+      },
+      q6: {
+        id: 'q6',
+        stage: 2,
+        prompt: 'What type of training data do you have?',
+        options: [
+          { id: 'A', text: 'Labeled input/output pairs - prompts and ideal completions', signal: 'sft' },
+          { id: 'B', text: 'Human preference rankings - pairs of good vs. bad responses for the same prompt', signal: 'dpo' },
+          { id: 'C', text: 'Problems with objectively correct, verifiable answers (math, code, logic, fact-checking)', signal: 'rft_verifiable' },
+          { id: 'D', text: 'None of the above - I want AI to judge quality, no human labeling', signal: 'rft_ai_judge' }
+        ]
+      },
+      q7: {
+        id: 'q7',
+        stage: 2,
+        prompt: 'What is your primary goal?',
+        options: [
+          { id: 'A', text: 'Teach a new task, format, or domain behavior - the model should reliably produce structured output', signal: 'sft' },
+          { id: 'B', text: 'Align to human preferences - improve tone, safety, helpfulness, or style consistency', signal: 'dpo' },
+          { id: 'C', text: 'Improve reasoning accuracy on problems that have a right answer', signal: 'rft_verifiable' },
+          { id: 'D', text: 'Improve response quality overall without investing in human preference labeling', signal: 'rft_ai_judge' }
+        ]
+      },
+      q8: {
+        id: 'q8',
+        stage: 2,
+        prompt: 'How many training examples do you have?',
+        options: [
+          { id: 'A', text: 'Under 100 examples', signal: 'size_under_100' },
+          { id: 'B', text: '100-500 examples', signal: 'size_100_500' },
+          { id: 'C', text: '500-1,000 examples', signal: 'size_500_1000' },
+          { id: 'D', text: '1,000 or more examples', signal: 'size_1000_plus' }
+        ]
+      },
+      q9: {
+        id: 'q9',
+        stage: 2,
+        prompt: 'Can you programmatically verify whether an answer is correct?',
+        options: [
+          { id: 'A', text: 'Yes - I can write a function, regex, or test suite to check correctness', signal: 'rft_verifiable' },
+          { id: 'B', text: 'No - quality is subjective or hard to define precisely', signal: 'not_verifiable' }
+        ]
+      }
+    };
+
+    const stage1Ids = ['q1', 'q2', 'q3', 'q4', 'q5'];
+    const stage2Ids = ['q6', 'q7', 'q8', 'q9'];
+
+    const techniqueMeta = {
+      sft: {
+        title: 'Fine-Tune with SFT',
+        subtitle: 'Supervised Fine-Tuning',
+        docLink: 'https://docs.aws.amazon.com/sagemaker/latest/dg/nova-supervised-fine-tuning.html'
+      },
+      dpo: {
+        title: 'Fine-Tune with DPO',
+        subtitle: 'Direct Preference Optimization',
+        docLink: 'https://docs.aws.amazon.com/sagemaker/latest/dg/nova-direct-preference-optimization.html'
+      },
+      rft_verifiable: {
+        title: 'Fine-Tune with RFT (Verifiable)',
+        subtitle: 'Reinforcement Fine-Tuning with Programmatic Verification',
+        docLink: 'https://docs.aws.amazon.com/sagemaker/latest/dg/nova-reinforcement-fine-tuning-verifiable.html'
+      },
+      rft_ai_judge: {
+        title: 'Fine-Tune with RFT (AI Judge)',
+        subtitle: 'Reinforcement Fine-Tuning with AI-Based Evaluation',
+        docLink: 'https://docs.aws.amazon.com/sagemaker/latest/dg/nova-reinforcement-fine-tuning-ai-judge.html'
+      },
+      nova_forge: {
+        title: 'Nova Forge',
+        subtitle: 'Deep Model Customization'
+      },
+      nova_forge_cpt: {
+        title: 'Nova Forge',
+        subtitle: 'Deep Model Customization (Continued Pre-Training)'
+      }
+    };
+
+    const datasetWarnings = {
+      sft: { warn: 200, fail: 100 },
+      dpo: { warn: 500, fail: 100 },
+      rft_verifiable: { warn: 1000, fail: 200 },
+      rft_ai_judge: { warn: 300, fail: 50 }
+    };
+
+    const datasetBucket = {
+      A: { label: 'Under 100 examples', estimate: 80 },
+      B: { label: '100-500 examples', estimate: 300 },
+      C: { label: '500-1,000 examples', estimate: 750 },
+      D: { label: '1,000 or more examples', estimate: 1200 }
+    };
+
+    const state = {
+      entryPoint: 'full',
+      currentQuestionId: 'q1',
+      history: [],
+      answers: {},
+      route: null,
+      stage2Result: null,
+      pendingAdvance: null
+    };
+
+    const questionCard = document.getElementById('questionCard');
+    const questionMeta = document.getElementById('questionMeta');
+    const questionDots = document.getElementById('questionDots');
+    const questionTitle = document.getElementById('questionTitle');
+    const answersContainer = document.getElementById('answersContainer');
+    const backButton = document.getElementById('backButton');
+
+    const stage1Fill = document.getElementById('stage1Fill');
+    const stage2Fill = document.getElementById('stage2Fill');
+    const stage1Percent = document.getElementById('stage1Percent');
+    const stage2Percent = document.getElementById('stage2Percent');
+    const stage1Label = document.getElementById('stage1Label');
+    const stage2Label = document.getElementById('stage2Label');
+    const wizardProgressbar = document.getElementById('wizardProgressbar');
+
+    const recommendation = document.getElementById('recommendation');
+    const verdictCard = document.getElementById('verdictCard');
+    const verdictHeading = document.getElementById('verdictHeading');
+    const verdictSubheading = document.getElementById('verdictSubheading');
+    const confidenceFill = document.getElementById('confidenceFill');
+    const confidenceLabel = document.getElementById('confidenceLabel');
+    const datasetWarning = document.getElementById('datasetWarning');
+    const whyList = document.getElementById('whyList');
+    const alternativesGrid = document.getElementById('alternativesGrid');
+    const nextSteps = document.getElementById('nextSteps');
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const toggle = document.getElementById('themeToggle');
+      toggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+
+    function initTheme() {
+      setTheme(prefersDark.matches ? 'dark' : 'light');
+      prefersDark.addEventListener('change', (event) => {
+        setTheme(event.matches ? 'dark' : 'light');
+      });
+    }
+
+    function getPositionInStage(questionId) {
+      const q = questions[questionId];
+      const stageIds = q.stage === 1 ? stage1Ids : stage2Ids;
+      const index = stageIds.indexOf(questionId);
+      return { stage: q.stage, index, total: stageIds.length };
+    }
+
+    function getPercent(done, total) {
+      return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+    }
+
+    function computeStageProgress() {
+      let stage1Answered = stage1Ids.filter((id) => !!state.answers[id]).length;
+      let stage2Answered = stage2Ids.filter((id) => !!state.answers[id]).length;
+
+      if (state.entryPoint === 'stage2-only') {
+        stage1Answered = stage1Ids.length;
+      }
+
+      let stage2LabelText = 'Stage 2: Fine-Tuning Technique';
+      if (state.route === 'nova_forge' || state.route === 'nova_forge_cpt') {
+        stage2LabelText = 'Stage 2: Not applicable';
+      }
+
+      stage1Label.textContent = state.entryPoint === 'stage2-only'
+        ? 'Stage 1: Assumed SageMaker'
+        : 'Stage 1: Customization Approach';
+      stage2Label.textContent = stage2LabelText;
+
+      const stage1Pct = getPercent(stage1Answered, stage1Ids.length);
+      const stage2Pct = state.route === 'nova_forge' || state.route === 'nova_forge_cpt'
+        ? 0
+        : getPercent(stage2Answered, stage2Ids.length);
+
+      stage1Fill.style.width = `${stage1Pct}%`;
+      stage2Fill.style.width = `${stage2Pct}%`;
+      stage1Percent.textContent = `${stage1Pct}%`;
+      stage2Percent.textContent = state.route === 'nova_forge' || state.route === 'nova_forge_cpt' ? 'N/A' : `${stage2Pct}%`;
+
+      const ariaNow = Math.round((stage1Pct * 0.5) + (stage2Pct * 0.5));
+      wizardProgressbar.setAttribute('aria-valuenow', String(ariaNow));
+    }
+
+    function renderDots(position) {
+      questionDots.innerHTML = '';
+      for (let i = 0; i < position.total; i += 1) {
+        const dot = document.createElement('span');
+        dot.className = `dot ${i <= position.index ? 'active' : ''}`;
+        questionDots.appendChild(dot);
+      }
+    }
+
+    function clearFutureAnswersFrom(questionId) {
+      const sequence = state.entryPoint === 'stage2-only'
+        ? stage2Ids
+        : [...stage1Ids, ...(state.route === 'sagemaker' ? stage2Ids : [])];
+      const idx = sequence.indexOf(questionId);
+      if (idx === -1) return;
+
+      for (let i = idx + 1; i < sequence.length; i += 1) {
+        delete state.answers[sequence[i]];
+      }
+    }
+
+    function animateQuestionUpdate(updateFn) {
+      if (reducedMotion) {
+        updateFn();
+        return;
+      }
+
+      questionCard.classList.add('is-exiting');
+      window.setTimeout(() => {
+        updateFn();
+        questionCard.classList.remove('is-exiting');
+        questionCard.classList.add('is-entering');
+        window.requestAnimationFrame(() => {
+          questionCard.classList.remove('is-entering');
+        });
+      }, 220);
+    }
+
+    function renderCurrentQuestion() {
+      const q = questions[state.currentQuestionId];
+      const position = getPositionInStage(state.currentQuestionId);
+
+      questionMeta.textContent = `STAGE ${position.stage} · QUESTION ${position.index + 1} OF ${position.total}`;
+      questionTitle.textContent = q.prompt;
+      renderDots(position);
+
+      answersContainer.innerHTML = '';
+      const selected = state.answers[state.currentQuestionId];
+
+      q.options.forEach((option) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `answer-btn ${selected === option.id ? 'selected' : ''}`;
+        btn.setAttribute('aria-pressed', selected === option.id ? 'true' : 'false');
+        btn.innerHTML = `<span>${option.text}</span><span class="checkmark" aria-hidden="true">✓</span>`;
+        btn.addEventListener('click', () => handleOptionClick(option.id));
+        answersContainer.appendChild(btn);
+      });
+
+      const isFirstVisibleQuestion = state.history.length === 0;
+      backButton.style.display = isFirstVisibleQuestion ? 'none' : 'inline-flex';
+
+      computeStageProgress();
+    }
+
+    function gotoQuestion(questionId) {
+      animateQuestionUpdate(() => {
+        state.currentQuestionId = questionId;
+        renderCurrentQuestion();
+      });
+    }
+
+    function evaluateStage1Route() {
+      let novaForgeSignals = 0;
+
+      stage1Ids.forEach((id) => {
+        const selectedId = state.answers[id];
+        const selectedOption = questions[id].options.find((opt) => opt.id === selectedId);
+        if (!selectedOption) return;
+
+        if (selectedOption.signal === 'nova' || selectedOption.signal === 'nova_cpt') {
+          novaForgeSignals += 1;
+        }
+      });
+
+      const q1Answer = state.answers.q1;
+      const q3Answer = state.answers.q3;
+
+      let route;
+      if (novaForgeSignals >= 3) {
+        route = 'nova_forge';
+      } else if (novaForgeSignals === 2 && q3Answer !== 'A') {
+        route = 'nova_forge';
+      } else if (q1Answer === 'D') {
+        route = 'nova_forge_cpt';
+      } else {
+        route = 'sagemaker';
+      }
+      return route;
+    }
+
+    function evaluateStage2Technique() {
+      const q6 = state.answers.q6;
+      const q7 = state.answers.q7;
+      const q9 = state.answers.q9;
+
+      const scores = { sft: 0, dpo: 0, rft_verifiable: 0, rft_ai_judge: 0 };
+
+      if (q6 === 'A') scores.sft += 2;
+      if (q6 === 'B') scores.dpo += 2;
+      if (q6 === 'C') scores.rft_verifiable += 2;
+      if (q6 === 'D') scores.rft_ai_judge += 2;
+
+      if (q7 === 'A') scores.sft += 2;
+      if (q7 === 'B') scores.dpo += 2;
+      if (q7 === 'C') scores.rft_verifiable += 2;
+      if (q7 === 'D') scores.rft_ai_judge += 2;
+
+      if (q9 === 'A') scores.rft_verifiable += 3;
+      if (q9 === 'B') scores.rft_verifiable -= 3;
+
+      const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const winner = ranked[0][0];
+      const topScore = ranked[0][1];
+      const secondScore = ranked[1][1];
+      const diff = topScore - secondScore;
+      const confidence = diff >= 4 ? 'Strong' : diff >= 2 ? 'Moderate' : 'Mixed';
+
+      return { scores, winner, confidence, diff };
+    }
+
+    function warningForWinner(winner) {
+      const q8 = state.answers.q8;
+      if (!q8 || !datasetWarnings[winner]) return null;
+
+      const bucket = datasetBucket[q8];
+      const thresholds = datasetWarnings[winner];
+      if (!bucket) return null;
+
+      if (bucket.estimate < thresholds.fail) {
+        return {
+          type: 'fail',
+          text: `⚠ Your dataset (${bucket.label}) is below the failure floor for ${prettyTechniqueName(winner)} (${thresholds.fail}+). Results are likely unstable. Expand your dataset before training.`
+        };
+      }
+
+      if (bucket.estimate < thresholds.warn) {
+        return {
+          type: 'warn',
+          text: `⚠ Your dataset (${bucket.label}) is below the recommended minimum for ${prettyTechniqueName(winner)} (${thresholds.warn}+). Results may be inconsistent. Consider expanding your dataset before training.`
+        };
+      }
+
+      return null;
+    }
+
+    function prettyTechniqueName(technique) {
+      if (technique === 'sft') return 'SFT';
+      if (technique === 'dpo') return 'DPO';
+      if (technique === 'rft_verifiable') return 'RFT-verifiable';
+      if (technique === 'rft_ai_judge') return 'RFT-AI-judge';
+      return technique;
+    }
+
+    function confidenceWidth(confidence) {
+      if (confidence === 'Strong') return 80;
+      if (confidence === 'Moderate') return 60;
+      return 40;
+    }
+
+    function buildWhyItemsForNova(route) {
+      const items = [];
+      const q2 = state.answers.q2;
+      const q3 = state.answers.q3;
+
+      if (state.answers.q1 === 'C' || state.answers.q4 === 'C' || state.answers.q4 === 'D') {
+        items.push({ icon: '✓', text: 'Your goals call for capability-level specialization, which exceeds typical post-training workflows.' });
+      }
+
+      if (q2 === 'C' || q2 === 'D') {
+        items.push({ icon: '✓', text: 'You indicated data volume suitable for deeper customization or continued pre-training.' });
+      }
+
+      if (route === 'nova_forge_cpt' || state.answers.q1 === 'D') {
+        items.push({ icon: '⚠', text: 'You need new factual knowledge. That points to continued pre-training or RAG, not classic SFT.' });
+      }
+
+      if (q3 !== 'B') {
+        items.push({ icon: '⚠', text: 'Nova Forge requires SageMaker HyperPod with p5.48xlarge-class infrastructure.' });
+      }
+
+      items.push({ icon: '⚠', text: 'Nova Forge access requires AWS program approval and is not a one-click self-serve path.' });
+      return items.slice(0, 4);
+    }
+
+    function buildWhyItemsForTechnique(winner) {
+      const q6 = state.answers.q6;
+      const q7 = state.answers.q7;
+      const q8 = state.answers.q8;
+      const q9 = state.answers.q9;
+      const items = [];
+
+      if (winner === 'dpo') {
+        if (q6 === 'B') items.push({ icon: '✓', text: 'You have preference ranking data (chosen vs. rejected), which maps directly to DPO training.' });
+        if (q7 === 'B') items.push({ icon: '✓', text: 'Your goal is preference alignment, and DPO is purpose-built for that objective.' });
+        if (q8 === 'C' || q8 === 'D') items.push({ icon: '✓', text: `${datasetBucket[q8].label} puts you near or above the practical data range for DPO.` });
+        if (q9 === 'B') items.push({ icon: '⚠', text: 'Your quality criteria are subjective, which is a fit for DPO but limits verifiable RFT paths.' });
+      }
+
+      if (winner === 'sft') {
+        if (q6 === 'A') items.push({ icon: '✓', text: 'You have labeled input/output pairs, the exact data format SFT expects.' });
+        if (q7 === 'A') items.push({ icon: '✓', text: 'Your goal is task and format consistency, which is where SFT is strongest.' });
+        items.push({ icon: '⚠', text: 'SFT changes behavior and style. It does not reliably inject new factual knowledge.' });
+        if (q8 === 'A' || q8 === 'B') items.push({ icon: '✗', text: 'Your dataset is small for robust SFT outcomes. Aim for 500+ examples for more stable performance.' });
+      }
+
+      if (winner === 'rft_verifiable') {
+        if (q6 === 'C') items.push({ icon: '✓', text: 'Your task type has objectively verifiable answers, ideal for verifiable RFT.' });
+        if (q7 === 'C') items.push({ icon: '✓', text: 'You are optimizing for reasoning accuracy on right-answer tasks.' });
+        if (q9 === 'A') items.push({ icon: '✓', text: 'You can programmatically verify correctness, the key requirement for this technique.' });
+        if (q8 === 'A' || q8 === 'B') items.push({ icon: '⚠', text: 'Your data size is below the preferred range for strong RFT gains; scale collection before training.' });
+      }
+
+      if (winner === 'rft_ai_judge') {
+        if (q6 === 'D') items.push({ icon: '✓', text: 'You explicitly prefer AI-based quality judging over human preference labeling.' });
+        if (q7 === 'D') items.push({ icon: '✓', text: 'Your goal is broad response-quality improvement with minimal labeling operations.' });
+        if (q9 === 'B') items.push({ icon: '✓', text: 'You cannot programmatically verify correctness, which makes AI-judge RFT more practical.' });
+        if (q8 === 'A') items.push({ icon: '⚠', text: 'Very small datasets can cause unstable judge feedback loops. Add more examples when possible.' });
+      }
+
+      return items.slice(0, 4);
+    }
+
+    function alternativeReason(tech, winner, route) {
+      if (route === 'nova_forge' || route === 'nova_forge_cpt') {
+        if (tech === 'sft') return 'SFT is useful for behavior shaping, but your goals indicate deeper capability building than post-training alone can provide.';
+        if (tech === 'dpo') return 'DPO optimizes preferences, not foundational capability depth or knowledge injection.';
+        if (tech === 'rft_verifiable') return 'RFT-verifiable improves right-answer reasoning but does not replace deep domain adaptation from earlier checkpoints.';
+        if (tech === 'rft_ai_judge') return 'RFT with AI judges improves output quality, but your requirement points to model-level specialization first.';
+      }
+
+      const q6 = state.answers.q6;
+      const q7 = state.answers.q7;
+      const q9 = state.answers.q9;
+
+      if (tech === 'sft') {
+        if (winner === 'dpo') return 'You have preference-alignment goals and ranking data, making DPO a stronger fit than plain supervised tuning.';
+        if (winner === 'rft_verifiable') return 'Your objective is correctness on verifiable tasks, where reinforcement signals outperform straightforward SFT.';
+        if (winner === 'rft_ai_judge') return 'You do not center labeled input/output pairs, so SFT is not the most direct path.';
+      }
+
+      if (tech === 'dpo') {
+        if (q6 !== 'B' && q7 !== 'B') return 'Your data and objective are not preference-ranking led, so DPO is less aligned with your setup.';
+        return 'DPO was close, but another method better matches your verification constraints and target outcomes.';
+      }
+
+      if (tech === 'rft_verifiable') {
+        if (q9 === 'B') return 'You cannot programmatically verify correctness, which is a hard blocker for verifiable RFT.';
+        return 'RFT-verifiable is powerful, but your primary objective is not a strict right-answer optimization task.';
+      }
+
+      if (tech === 'rft_ai_judge') {
+        if (winner === 'dpo') return 'You already have human preference data, so DPO gives cleaner alignment signals than AI-judge loops.';
+        if (winner === 'rft_verifiable') return 'You can verify correctness programmatically, making verifiable RFT more precise than judge-based scoring.';
+        return 'AI-judge RFT is viable, but your input format and goals align better with another technique.';
+      }
+
+      return 'This option was not the strongest match for your selected data profile and objective.';
+    }
+
+    function renderWhyList(items) {
+      whyList.innerHTML = '';
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        li.className = 'reason-item';
+        li.innerHTML = `<span class="reason-icon" aria-hidden="true">${item.icon}</span><span>${item.text}</span>`;
+        whyList.appendChild(li);
+      });
+    }
+
+    function renderAlternatives(winner, route) {
+      alternativesGrid.innerHTML = '';
+      const techniques = ['sft', 'dpo', 'rft_verifiable', 'rft_ai_judge'];
+      const remaining = route === 'nova_forge' || route === 'nova_forge_cpt'
+        ? techniques.slice(0, 3)
+        : techniques.filter((tech) => tech !== winner);
+
+      remaining.forEach((tech) => {
+        const card = document.createElement('article');
+        card.className = 'alt-card';
+        card.innerHTML = `
+          <h4>${techniqueMeta[tech].subtitle}</h4>
+          <p>${alternativeReason(tech, winner, route)}</p>
+        `;
+        alternativesGrid.appendChild(card);
+      });
+    }
+
+    function setDatasetWarning(winner) {
+      const warning = warningForWinner(winner);
+      datasetWarning.className = 'warning-banner';
+      datasetWarning.textContent = '';
+      if (!warning) return;
+      datasetWarning.classList.add(warning.type);
+      datasetWarning.textContent = warning.text;
+    }
+
+    function renderNextSteps(route, winner) {
+      nextSteps.innerHTML = '';
+      let steps = [];
+      if (route === 'sagemaker') {
+        steps = [
+          {
+            label: 'Validate your dataset',
+            link: '#',
+            className: 'pill-link',
+            text: 'sm/dataquality'
+          },
+          {
+            label: 'Open SageMaker Model Customization in Studio',
+            link: 'https://docs.aws.amazon.com/sagemaker/latest/dg/studio-updated-ui.html',
+            className: 'text-link',
+            text: 'Open SageMaker Model Customization in Studio →',
+            external: true
+          },
+          {
+            label: 'Read the technique guide',
+            link: (winner && techniqueMeta[winner] && techniqueMeta[winner].docLink) ? techniqueMeta[winner].docLink : 'https://docs.aws.amazon.com/sagemaker/latest/dg/model-customization.html',
+            className: 'text-link',
+            text: 'Read the technique guide →',
+            external: true
+          }
+        ];
+      } else {
+        steps = [
+          {
+            label: 'Review Nova Forge infrastructure requirements',
+            link: 'https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html',
+            className: 'text-link',
+            text: 'Review Nova Forge infrastructure requirements →',
+            external: true
+          },
+          {
+            label: 'Apply for Nova Forge access',
+            link: 'https://aws.amazon.com/nova/forge/',
+            className: 'text-link',
+            text: 'Apply for Nova Forge access →',
+            external: true
+          },
+          {
+            label: 'Read Nova Forge SFT documentation',
+            link: 'https://docs.aws.amazon.com/nova/latest/userguide/forge-supervised-fine-tuning.html',
+            className: 'text-link',
+            text: 'Read Nova Forge SFT documentation →',
+            external: true
+          }
+        ];
+      }
+
+      steps.forEach((step, idx) => {
+        const li = document.createElement('li');
+        li.className = 'step-item';
+        li.dataset.step = String(idx + 1);
+
+        const label = document.createElement('span');
+        label.textContent = step.label;
+
+        const link = document.createElement('a');
+        link.href = step.link;
+        link.className = step.className;
+        link.textContent = step.text;
+        if (step.external) {
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+        }
+
+        li.appendChild(label);
+        li.appendChild(link);
+        nextSteps.appendChild(li);
+      });
+    }
+
+    function revealRecommendation() {
+      recommendation.classList.remove('revealed');
+      recommendation.style.display = 'block';
+      void recommendation.offsetWidth;
+      recommendation.classList.add('revealed');
+      recommendation.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      window.setTimeout(() => verdictHeading.focus(), reducedMotion ? 0 : 250);
+    }
+
+    function finalizeRecommendation() {
+      computeStageProgress();
+
+      if (state.route === 'nova_forge' || state.route === 'nova_forge_cpt') {
+        verdictCard.classList.add('nova');
+        verdictHeading.textContent = techniqueMeta[state.route].title;
+        verdictSubheading.textContent = techniqueMeta[state.route].subtitle;
+        confidenceFill.style.width = '78%';
+        confidenceLabel.textContent = 'Confidence: Strong';
+        datasetWarning.className = 'warning-banner';
+        datasetWarning.textContent = '';
+
+        renderWhyList(buildWhyItemsForNova(state.route));
+        renderAlternatives(null, state.route);
+        renderNextSteps(state.route, null);
+        revealRecommendation();
+        return;
+      }
+
+      const result = evaluateStage2Technique();
+      state.stage2Result = result;
+
+      const winner = result.winner;
+      verdictCard.classList.remove('nova');
+      verdictHeading.textContent = techniqueMeta[winner].title;
+      verdictSubheading.textContent = techniqueMeta[winner].subtitle;
+      confidenceFill.style.width = `${confidenceWidth(result.confidence)}%`;
+      confidenceLabel.textContent = `Confidence: ${result.confidence}`;
+
+      setDatasetWarning(winner);
+      renderWhyList(buildWhyItemsForTechnique(winner));
+      renderAlternatives(winner, state.route);
+      renderNextSteps(state.route, winner);
+      revealRecommendation();
+    }
+
+    function nextQuestionIdFrom(currentId) {
+      if (stage1Ids.includes(currentId)) {
+        const idx = stage1Ids.indexOf(currentId);
+        if (idx < stage1Ids.length - 1) return stage1Ids[idx + 1];
+        return null;
+      }
+
+      if (stage2Ids.includes(currentId)) {
+        const idx = stage2Ids.indexOf(currentId);
+        if (idx < stage2Ids.length - 1) return stage2Ids[idx + 1];
+      }
+      return null;
+    }
+
+    function proceedAfterAnswer(currentId) {
+      if (stage1Ids.includes(currentId)) {
+        const nextId = nextQuestionIdFrom(currentId);
+        if (nextId) {
+          state.history.push(currentId);
+          gotoQuestion(nextId);
+          return;
+        }
+
+        state.route = evaluateStage1Route();
+
+        if (state.route === 'sagemaker') {
+          state.history.push(currentId);
+          gotoQuestion('q6');
+        } else {
+          finalizeRecommendation();
+        }
+        return;
+      }
+
+      const nextId = nextQuestionIdFrom(currentId);
+      if (nextId) {
+        state.history.push(currentId);
+        gotoQuestion(nextId);
+        return;
+      }
+
+      finalizeRecommendation();
+    }
+
+    function handleOptionClick(optionId) {
+      const current = state.currentQuestionId;
+      const alreadySelected = state.answers[current] === optionId;
+
+      if (state.pendingAdvance) {
+        window.clearTimeout(state.pendingAdvance);
+        state.pendingAdvance = null;
+      }
+
+      if (alreadySelected) {
+        delete state.answers[current];
+        clearFutureAnswersFrom(current);
+        renderCurrentQuestion();
+        return;
+      }
+
+      state.answers[current] = optionId;
+      clearFutureAnswersFrom(current);
+      renderCurrentQuestion();
+
+      state.pendingAdvance = window.setTimeout(() => {
+        state.pendingAdvance = null;
+        proceedAfterAnswer(current);
+      }, 300);
+    }
+
+    function handleBack() {
+      if (!state.history.length) return;
+
+      if (state.pendingAdvance) {
+        window.clearTimeout(state.pendingAdvance);
+        state.pendingAdvance = null;
+      }
+
+      const current = state.currentQuestionId;
+      delete state.answers[current];
+      clearFutureAnswersFrom(current);
+
+      const previous = state.history.pop();
+
+      if (stage1Ids.includes(previous)) {
+        state.route = null;
+        state.stage2Result = null;
+      }
+
+      recommendation.classList.remove('revealed');
+      recommendation.style.display = 'none';
+      gotoQuestion(previous);
+    }
+
+    function startFlow(mode) {
+      if (state.pendingAdvance) {
+        window.clearTimeout(state.pendingAdvance);
+        state.pendingAdvance = null;
+      }
+
+      state.entryPoint = mode;
+      state.currentQuestionId = mode === 'stage2-only' ? 'q6' : 'q1';
+      state.history = [];
+      state.answers = {};
+      state.route = mode === 'stage2-only' ? 'sagemaker' : null;
+      state.stage2Result = null;
+
+      recommendation.classList.remove('revealed');
+      recommendation.style.display = 'none';
+
+      renderCurrentQuestion();
+      document.getElementById('advisor').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    function resetAll() {
+      startFlow('full');
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    document.getElementById('startFullFlow').addEventListener('click', () => startFlow('full'));
+    document.getElementById('startStage2Only').addEventListener('click', () => startFlow('stage2-only'));
+
+    backButton.addEventListener('click', handleBack);
+    document.getElementById('startOverTop').addEventListener('click', resetAll);
+    document.getElementById('startOverBottom').addEventListener('click', resetAll);
+
+    initTheme();
+    renderCurrentQuestion();
+  </script>
+</body>
+</html>
